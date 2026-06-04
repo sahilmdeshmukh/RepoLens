@@ -1,9 +1,10 @@
 # Python
 __pycache__/
 *.py[cod]
-.venv/
+**/.venv/
 *.egg-info/
 .env
+*.env
 
 # Node
 node_modules/
@@ -14,5 +15,10 @@ dist/
 *.db
 *.sqlite
 
-# Misc
+# IDE
+.idea/
+.vscode/
+
+# OS
 .DS_Store
+Thumbs.db

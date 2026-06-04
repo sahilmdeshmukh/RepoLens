@@ -1,5 +1,3 @@
-
-
 # RepoLens
 
 A RAG-powered chat app that indexes GitHub repos and API docs, enabling natural
@@ -17,9 +15,10 @@ built-in retrieval + answer quality evals.
 ```bash
 cd backend
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+.venv\Scripts\activate      # Windows
+# source .venv/bin/activate # macOS/Linux
 pip install -r requirements.txt
-cp .env.example .env       # fill in your keys
+cp .env.example .env        # fill in your keys
 uvicorn app.main:app --reload
 ```
 
@@ -29,3 +28,18 @@ cd frontend
 npm install
 npm run dev
 ```
+
+### Running Tests
+```bash
+cd backend
+pytest -v
+```
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `OPENAI_API_KEY` | OpenAI API key for embeddings and GPT-4o |
+| `QDRANT_URL` | Qdrant Cloud cluster URL |
+| `QDRANT_API_KEY` | Qdrant Cloud API key |
+| `GITHUB_TOKEN` | GitHub personal access token (optional, raises API rate limit) |
