@@ -5,6 +5,7 @@ from app.config import settings  # importing this validates all env vars at star
 from app.db.sqlite import init_db
 from app.db.qdrant import ensure_collection
 from app.ingestion.router import router as ingestion_router
+from app.chat.router import router as chat_router
 
 
 @asynccontextmanager
@@ -26,6 +27,7 @@ app.add_middleware(
 
 
 app.include_router(ingestion_router)
+app.include_router(chat_router)
 
 
 @app.get("/health")
