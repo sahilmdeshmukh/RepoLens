@@ -6,6 +6,7 @@ from app.db.sqlite import init_db
 from app.db.qdrant import ensure_collection
 from app.ingestion.router import router as ingestion_router
 from app.chat.router import router as chat_router
+from app.evals.router import router as evals_router
 
 
 @asynccontextmanager
@@ -28,6 +29,7 @@ app.add_middleware(
 
 app.include_router(ingestion_router)
 app.include_router(chat_router)
+app.include_router(evals_router)
 
 
 @app.get("/health")

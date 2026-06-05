@@ -1,0 +1,22 @@
+[
+  {
+    "question": "What authentication methods are supported?",
+    "expected_answer": "The API supports API key authentication via Bearer tokens in the Authorization header"
+  },
+  {
+    "question": "How do you paginate results?",
+    "expected_answer": "Pagination uses cursor-based pagination with next_cursor and limit parameters"
+  },
+  {
+    "question": "How are errors returned?",
+    "expected_answer": "Errors are returned as JSON with error code and message fields"
+  },
+  {
+    "question": "What rate limits apply?",
+    "expected_answer": "The API allows 1000 requests per minute per API key"
+  },
+  {
+    "question": "What is the base URL for the API?",
+    "expected_answer": "The base URL is https://api.example.com/v1"
+  }
+]

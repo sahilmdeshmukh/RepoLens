@@ -1,0 +1,22 @@
+[
+  {
+    "question": "What is the main purpose of this repository?",
+    "expected_answer": "This repository contains the FastAPI framework for building APIs with Python"
+  },
+  {
+    "question": "How do you define a route in FastAPI?",
+    "expected_answer": "Routes are defined using decorators like @app.get() or @app.post() on async functions"
+  },
+  {
+    "question": "How does FastAPI handle request body validation?",
+    "expected_answer": "FastAPI uses Pydantic models to validate request bodies automatically"
+  },
+  {
+    "question": "What is dependency injection in FastAPI?",
+    "expected_answer": "FastAPI's Depends() system allows injecting shared logic like database sessions or authentication into route handlers"
+  },
+  {
+    "question": "How do you add middleware in FastAPI?",
+    "expected_answer": "Middleware is added using app.add_middleware() with a middleware class"
+  }
+]
