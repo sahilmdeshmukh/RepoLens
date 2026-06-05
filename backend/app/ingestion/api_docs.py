@@ -1,7 +1,8 @@
 import uuid
 import asyncio
-from urllib.parse import urlparse
-from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
+from urllib.parse import urlparse, urljoin
+from playwright.async_api import async_playwright
+from bs4 import BeautifulSoup
 from app.ingestion.chunker import chunk_html
 from app.ingestion.embedder import embed_texts
 from app.db.sqlite import insert_chunk, update_source_status
@@ -15,42 +16,47 @@ async def _crawl_site(base_url: str) -> list[dict]:
     """
     Crawl all pages under the same domain as base_url using a headless browser.
 
-    WHY headless browser: modern API docs (Stripe, FastAPI, OpenAI) render content
-    via JavaScript. A plain HTTP request gets an empty skeleton. Playwright actually
-    runs the JS and gives us the fully rendered page HTML.
+    WHY Playwright directly instead of crawl4ai: crawl4ai requires lxml which
+    doesn't have a Python 3.14 wheel yet. Playwright is already installed and
+    gives us the same capability — a real headless Chromium browser that runs
+    JavaScript and returns fully rendered HTML.
 
     Returns a list of {url, html} dicts, one per crawled page.
     """
     parsed = urlparse(base_url)
     domain = f"{parsed.scheme}://{parsed.netloc}"
 
-    browser_config = BrowserConfig(headless=True)
-    run_config = CrawlerRunConfig(cache_mode=CacheMode.BYPASS)
-
     pages = []
     visited = set()
     queue = [base_url]
 
-    async with AsyncWebCrawler(config=browser_config) as crawler:
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+
         while queue and len(visited) < MAX_PAGES:
             url = queue.pop(0)
             if url in visited:
                 continue
             visited.add(url)
 
-            result = await crawler.arun(url=url, config=run_config)
-            if not result.success:
-                continue
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=15000)
+                html = await page.content()
+                pages.append({"url": url, "html": html})
 
-            pages.append({"url": url, "html": result.html})
+                # Extract all internal links from the page
+                soup = BeautifulSoup(html, "html.parser")
+                for tag in soup.find_all("a", href=True):
+                    href = urljoin(url, tag["href"]).split("#")[0]  # strip anchors
+                    if href.startswith(domain) and href not in visited:
+                        queue.append(href)
+            except Exception:
+                continue  # skip pages that fail to load
 
-            # Follow internal links to discover more pages
-            internal_links = (result.links or {}).get("internal", [])
-            for link in internal_links:
-                href = link.get("href", "")
-                # Only follow links within the same domain we started from
-                if href.startswith(domain) and href not in visited:
-                    queue.append(href)
+        await browser.close()
+
+    return pages
 
     return pages
 
