@@ -141,10 +141,10 @@ export function Sidebar({ activeSourceId, onSelectSource }: SidebarProps) {
             No sources yet
           </div>
         )}
-        {sources.map((source) => {
+        {sources.map((source: Source) => {
           const isActive = activeSourceId === source.id
           const canSelect = source.status === 'complete'
-          const S = STATUS[source.status] || STATUS.pending
+          const S = STATUS[source.status as keyof typeof STATUS] || STATUS.pending
           return (
             <button key={source.id} onClick={() => canSelect && onSelectSource(source)}
               disabled={!canSelect}
