@@ -1,22 +1,22 @@
 [
   {
-    "question": "What is the main purpose of this repository?",
-    "expected_answer": "This repository contains the FastAPI framework for building APIs with Python"
+    "question": "How do I create a route in Flask?",
+    "expected_answer": "Routes are defined using the @app.route() decorator or @app.get() and @app.post() decorators on a function"
   },
   {
-    "question": "How do you define a route in FastAPI?",
-    "expected_answer": "Routes are defined using decorators like @app.get() or @app.post() on async functions"
+    "question": "How do I handle POST requests in Flask?",
+    "expected_answer": "Use @app.route() with methods=['POST'] or the @app.post() decorator, then access request data via request.form or request.json"
   },
   {
-    "question": "How does FastAPI handle request body validation?",
-    "expected_answer": "FastAPI uses Pydantic models to validate request bodies automatically"
+    "question": "How does Flask handle errors and exceptions?",
+    "expected_answer": "Flask uses @app.errorhandler() decorator to register error handlers for specific HTTP error codes or exception types"
   },
   {
-    "question": "What is dependency injection in FastAPI?",
-    "expected_answer": "FastAPI's Depends() system allows injecting shared logic like database sessions or authentication into route handlers"
+    "question": "How does Blueprint work in Flask?",
+    "expected_answer": "Blueprint is a way to organize Flask application into reusable components, registered on the app using app.register_blueprint()"
   },
   {
-    "question": "How do you add middleware in FastAPI?",
-    "expected_answer": "Middleware is added using app.add_middleware() with a middleware class"
+    "question": "How do I access request data in Flask?",
+    "expected_answer": "Request data is accessed via the request object — request.form for form data, request.json for JSON body, request.args for query parameters"
   }
 ]

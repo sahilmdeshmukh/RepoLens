@@ -23,6 +23,7 @@ DOC_EXTENSIONS = {".md", ".mdx"}
 SKIP_DIRS = {"node_modules", ".git", "__pycache__", "dist", "build", ".venv", "venv"}
 
 MAX_FILE_SIZE_BYTES = 100_000  # skip files larger than 100KB — usually generated/minified
+MAX_FILES = 150  # cap files per repo to keep indexing fast (covers most meaningful code)
 
 
 def _github_headers() -> dict:
@@ -37,7 +38,10 @@ def _parse_repo_url(url: str) -> tuple[str, str]:
     Extract owner and repo name from a GitHub URL.
     Handles: https://github.com/owner/repo  or  https://github.com/owner/repo.git
     """
-    parts = url.rstrip("/").rstrip(".git").split("/")
+    url = url.rstrip("/")
+    if url.endswith(".git"):
+        url = url[:-4]  # removesuffix — safe, doesn't strip individual chars
+    parts = url.split("/")
     return parts[-2], parts[-1]
 
 
@@ -50,7 +54,7 @@ def _list_repo_files(owner: str, repo: str) -> list[dict]:
     which is much faster for large repos.
     """
     url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/HEAD?recursive=1"
-    resp = httpx.get(url, headers=_github_headers(), timeout=30)
+    resp = httpx.get(url, headers=_github_headers(), timeout=30, follow_redirects=True)
     resp.raise_for_status()
     tree = resp.json().get("tree", [])
     return [f for f in tree if f["type"] == "blob"]  # blobs are files, trees are directories
@@ -65,7 +69,7 @@ def _fetch_file_content(owner: str, repo: str, path: str) -> str | None:
     This avoids binary data in JSON responses.
     """
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
-    resp = httpx.get(url, headers=_github_headers(), timeout=15)
+    resp = httpx.get(url, headers=_github_headers(), timeout=15, follow_redirects=True)
     if resp.status_code != 200:
         return None
     data = resp.json()
@@ -88,7 +92,10 @@ def ingest_github_repo(source_id: str, repo_url: str):
         files = _list_repo_files(owner, repo)
 
         all_chunks = []
+        indexed_count = 0
         for file in files:
+            if indexed_count >= MAX_FILES:
+                break
             path = file["path"]
 
             # Skip unwanted directories
@@ -107,6 +114,7 @@ def ingest_github_repo(source_id: str, repo_url: str):
             if not content:
                 continue
 
+            indexed_count += 1
             raw_chunks = chunk_code(content, language) if language else chunk_markdown(content)
 
             for raw in raw_chunks:
@@ -135,8 +143,7 @@ def ingest_github_repo(source_id: str, repo_url: str):
         texts = [c["text"] for c in all_chunks]
         embeddings = embed_texts(texts)
 
-        # Upsert into Qdrant for semantic search
-        # PointStruct = one vector + its metadata payload
+        # Upsert into Qdrant in batches to avoid connection timeouts
         qdrant = get_qdrant()
         points = [
             PointStruct(
@@ -146,7 +153,9 @@ def ingest_github_repo(source_id: str, repo_url: str):
             )
             for c, emb in zip(all_chunks, embeddings)
         ]
-        qdrant.upsert(collection_name=COLLECTION_NAME, points=points)
+        batch_size = 100
+        for i in range(0, len(points), batch_size):
+            qdrant.upsert(collection_name=COLLECTION_NAME, points=points[i:i + batch_size])
 
         # Store chunk text in SQLite for BM25 keyword search (Task 11)
         for chunk in all_chunks:
